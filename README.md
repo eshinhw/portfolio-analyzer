@@ -1,6 +1,6 @@
 # Portfolio Analyzer
 
-Quantitative Analysis on Stocks &amp; ETF Portfolios
+Quantitative Risk and Return Analysis for Stock & ETF Portfolios
 
 ## Frontend (React)
 

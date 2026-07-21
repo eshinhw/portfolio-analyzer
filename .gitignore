@@ -44,3 +44,5 @@ venv/
 build/
 dist/
 *.egg-info/
+
+.vite

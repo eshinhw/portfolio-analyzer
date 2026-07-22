@@ -1,7 +1,13 @@
 import { type CSSProperties } from "react";
 
 export const S: Record<string, CSSProperties> = {
-  app: { background: "#0B0F14", minHeight: "100vh", color: "#E7E5E0", fontFamily: "'Inter', sans-serif", fontSize: 14 },
+  app: {
+    background: "#0B0F14",
+    minHeight: "100vh",
+    color: "#E7E5E0",
+    fontFamily: "'Inter', sans-serif",
+    fontSize: 14,
+  },
   tickerStrip: {
     display: "flex",
     alignItems: "center",

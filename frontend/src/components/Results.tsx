@@ -1,5 +1,4 @@
 import { S } from "../styles/portfolioAnalyzerStyles";
-import React, { useState, useMemo, useCallback, useEffect, CSSProperties } from "react";
 import {
   LineChart,
   Line,
@@ -19,33 +18,39 @@ import {
 import { Plus, Trash2, Play, Loader2, AlertTriangle, RadioTower, ArrowUpRight, ArrowDownRight } from "lucide-react";
 import Metric from "./subcomponents/Metric";
 import Panel from "./subcomponents/Panel";
+import { type Asset, type Status, type AnalysisResult } from "../types/type";
+import { useMemo } from "react";
 
-export default function Results() {
+type Props = {
+  result: AnalysisResult | null;
+  status: Status;
+};
+
+export default function Results({ result, status }: Props) {
   const fmtPct = (x: number, d = 2): string => `${(x * 100).toFixed(d)}%`;
   const fmtNum = (x: number, d = 2): string => x.toFixed(d);
   const PALETTE = ["#FFB020", "#4FD1C5", "#F2545B", "#8B7EF2", "#5FBF6F", "#E8963B", "#6EC6E8", "#D986C0"];
+  // const pieData = useMemo(
+  //   () =>
+
+  //       .map((r) => ({ name: (r.symbol || "?").toUpperCase(), value: parseFloat(String(r.weight)) || 0 }))
+  //       .filter((d) => d.value > 0),
+  //   [rows],
+  // );
   return (
     <main style={S.main}>
       {status !== "done" && (
         <div style={S.emptyState}>
           <div style={S.emptyGlyph}>◆</div>
           <p>
-            Set up your holdings on the left, then run the analysis to see historical returns, risk metrics, drawdown,
-            and correlations.
+            Set up your assets on the left, then run the analysis to see historical returns, risk metrics, drawdown, and
+            correlations.
           </p>
         </div>
       )}
 
       {status === "done" && result && (
         <>
-          {dataSource === "demo" && (
-            <div style={S.banner}>
-              <AlertTriangle size={14} color="#FFB020" />
-              Showing simulated price data — live market data wasn't reachable from this browser session (or "simulated
-              data" was selected). Methodology and math are identical to the live path; figures are illustrative only.
-            </div>
-          )}
-
           {/* metric strip */}
           <div style={S.metricGrid}>
             <Metric label="Total return" value={fmtPct(result.totalReturn)} positive={result.totalReturn >= 0} />
@@ -117,7 +122,7 @@ export default function Results() {
           </Panel>
 
           <div style={S.twoCol}>
-            <Panel title="Allocation">
+            {/* <Panel title="Allocation">
               <ResponsiveContainer width="100%" height={220}>
                 <PieChart>
                   <Pie data={pieData} dataKey="value" nameKey="name" innerRadius={55} outerRadius={85} paddingAngle={2}>
@@ -129,7 +134,7 @@ export default function Results() {
                   <Legend wrapperStyle={{ fontSize: 12, color: "#8892A0" }} />
                 </PieChart>
               </ResponsiveContainer>
-            </Panel>
+            </Panel> */}
 
             <Panel title="Correlation matrix">
               <div style={{ overflowX: "auto" }}>

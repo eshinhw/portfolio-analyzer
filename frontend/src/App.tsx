@@ -1,8 +1,12 @@
 import { S } from "./styles/portfolioAnalyzerStyles";
 import Sidebar from "./components/Sidebar";
 import Results from "./components/Results";
+import { useState } from "react";
+import { type AnalysisResult, type Status } from "./types/type";
 
 export default function App() {
+  const [result, setResult] = useState<AnalysisResult | null>(null);
+  const [status, setStatus] = useState<Status>("idle");
   return (
     <div style={S.app}>
       <style>{`
@@ -17,8 +21,8 @@ export default function App() {
       `}</style>
 
       <div style={S.body}>
-        <Sidebar />
-        <Results />
+        <Sidebar result={result} setResult={setResult} status={status} setStatus={setStatus} />
+        <Results result={result} status={status} />
       </div>
     </div>
   );

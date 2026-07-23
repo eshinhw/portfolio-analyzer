@@ -4,9 +4,6 @@ import {
   Line,
   AreaChart,
   Area,
-  PieChart,
-  Pie,
-  Cell,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -14,11 +11,14 @@ import {
   Legend,
   ResponsiveContainer,
   ReferenceLine,
+  Pie,
+  Cell,
+  PieChart,
 } from "recharts";
-import { Plus, Trash2, Play, Loader2, AlertTriangle, RadioTower, ArrowUpRight, ArrowDownRight } from "lucide-react";
+import { ArrowUpRight, ArrowDownRight, Loader2, X } from "lucide-react";
 import Metric from "./subcomponents/Metric";
 import Panel from "./subcomponents/Panel";
-import { type Asset, type Status, type AnalysisResult } from "../types/type";
+import { type Status, type AnalysisResult, type PieDataPoint } from "../types/type";
 import { useMemo } from "react";
 
 type Props = {
@@ -29,17 +29,18 @@ type Props = {
 export default function Results({ result, status }: Props) {
   const fmtPct = (x: number, d = 2): string => `${(x * 100).toFixed(d)}%`;
   const fmtNum = (x: number, d = 2): string => x.toFixed(d);
-  const PALETTE = ["#FFB020", "#4FD1C5", "#F2545B", "#8B7EF2", "#5FBF6F", "#E8963B", "#6EC6E8", "#D986C0"];
-  // const pieData = useMemo(
-  //   () =>
 
-  //       .map((r) => ({ name: (r.symbol || "?").toUpperCase(), value: parseFloat(String(r.weight)) || 0 }))
-  //       .filter((d) => d.value > 0),
-  //   [rows],
-  // );
+  const PALETTE = ["#FFB020", "#4FD1C5", "#F2545B", "#8B7EF2", "#5FBF6F", "#E8963B", "#6EC6E8", "#D986C0"];
+  const pieData: PieDataPoint[] = useMemo(() => {
+    if (!result) return [{ name: "", value: 0 }];
+    return result.assetStats.map((a) => ({
+      name: a.symbol,
+      value: +(a.weight * 100).toFixed(2), // weights come back as 0-1 fractions
+    }));
+  }, [result]);
   return (
     <main style={S.main}>
-      {status !== "done" && (
+      {status === "idle" && (
         <div style={S.emptyState}>
           <div style={S.emptyGlyph}>◆</div>
           <p>
@@ -48,18 +49,31 @@ export default function Results({ result, status }: Props) {
           </p>
         </div>
       )}
+      {status === "loading" && !result && (
+        <div style={S.loadingState}>
+          <Loader2 size={15} style={{ color: "#FFB020", animation: "spin 1s linear infinite" }} />
+          <p>Running the analysis...Please hold on.</p>
+        </div>
+      )}
+      {status === "error" && (
+        <div style={S.loadingState}>
+          <X size={15} style={{ color: "#FFB020" }} />
+          <p>Something went wrong...</p>
+        </div>
+      )}
 
       {status === "done" && result && (
         <>
           {/* metric strip */}
           <div style={S.metricGrid}>
-            <Metric label="Total return" value={fmtPct(result.totalReturn)} positive={result.totalReturn >= 0} />
+            <Metric label="Total Return" value={fmtPct(result.totalReturn)} positive={result.totalReturn >= 0} />
             <Metric label="CAGR" value={fmtPct(result.cagr)} positive={result.cagr >= 0} />
-            <Metric label="Annualized volatility" value={fmtPct(result.annualVol)} neutral />
-            <Metric label="Sharpe ratio" value={fmtNum(result.sharpe)} positive={result.sharpe >= 0} />
-            <Metric label="Max drawdown" value={fmtPct(result.maxDrawdown)} positive={false} />
+            <Metric label="Sharpe Ratio" value={fmtNum(result.sharpe)} positive={result.sharpe >= 0} />
+            <Metric label="Alpha (Annualized)" value={fmtPct(result.alpha)} positive={result.alpha >= 0} />
+            <Metric label="Max Drawdown" value={fmtPct(result.maxDrawdown)} positive={false} />
+            <Metric label="Ann. Volatility" value={fmtPct(result.annualVol)} neutral />
+
             <Metric label={`Beta vs ${result.benchmark}`} value={fmtNum(result.beta)} neutral />
-            <Metric label="Alpha (annualized)" value={fmtPct(result.alpha)} positive={result.alpha >= 0} />
             <Metric label="Observations" value={`${result.nObs} days`} neutral />
           </div>
 
@@ -94,7 +108,7 @@ export default function Results({ result, status }: Props) {
           </Panel>
 
           {/* drawdown */}
-          <Panel title="Portfolio drawdown">
+          <Panel title="Portfolio Drawdown">
             <ResponsiveContainer width="100%" height={180}>
               <AreaChart data={result.drawdownSeries}>
                 <CartesianGrid stroke="#232B36" strokeDasharray="3 3" />
@@ -103,11 +117,7 @@ export default function Results({ result, status }: Props) {
                   tick={{ fill: "#8892A0", fontSize: 11 }}
                   tickFormatter={(v: number) => `${(v * 100).toFixed(0)}%`}
                 />
-                <Tooltip
-                  contentStyle={S.tooltip}
-                  formatter={(v: number) => fmtPct(v)}
-                  labelStyle={{ color: "#8892A0" }}
-                />
+                <Tooltip contentStyle={S.tooltip} formatter={(v: any) => fmtPct(v)} labelStyle={{ color: "#8892A0" }} />
                 <ReferenceLine y={0} stroke="#2A3340" />
                 <Area
                   type="monotone"
@@ -122,7 +132,7 @@ export default function Results({ result, status }: Props) {
           </Panel>
 
           <div style={S.twoCol}>
-            {/* <Panel title="Allocation">
+            <Panel title="Allocation">
               <ResponsiveContainer width="100%" height={220}>
                 <PieChart>
                   <Pie data={pieData} dataKey="value" nameKey="name" innerRadius={55} outerRadius={85} paddingAngle={2}>
@@ -130,13 +140,13 @@ export default function Results({ result, status }: Props) {
                       <Cell key={i} fill={PALETTE[i % PALETTE.length]} stroke="#0B0F14" strokeWidth={2} />
                     ))}
                   </Pie>
-                  <Tooltip contentStyle={S.tooltip} formatter={(v: number) => `${v}%`} />
+                  <Tooltip contentStyle={S.tooltip} formatter={(v: any) => `${v}%`} />
                   <Legend wrapperStyle={{ fontSize: 12, color: "#8892A0" }} />
                 </PieChart>
               </ResponsiveContainer>
-            </Panel> */}
+            </Panel>
 
-            <Panel title="Correlation matrix">
+            <Panel title="Correlation Matrix">
               <div style={{ overflowX: "auto" }}>
                 <table style={S.table}>
                   <thead>
@@ -174,7 +184,7 @@ export default function Results({ result, status }: Props) {
             </Panel>
           </div>
 
-          <Panel title="Holdings breakdown">
+          <Panel title="Assets Breakdown">
             <div style={{ overflowX: "auto" }}>
               <table style={S.table}>
                 <thead>

@@ -20,7 +20,7 @@ export default function App() {
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
         @media (max-width: 768px) {
-          .qa-body { flex-direction: column !important; }
+          .qa-body { flex-direction: column !important; align-items: stretch !important; }
           .qa-sidebar {
             width: 100% !important;
             position: static !important;

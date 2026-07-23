@@ -73,3 +73,8 @@ export interface AnalysisResult {
   nObs: number;
   benchmark: string;
 }
+
+export interface PieDataPoint {
+  name: string;
+  value: number;
+}

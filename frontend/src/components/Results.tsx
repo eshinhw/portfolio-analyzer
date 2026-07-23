@@ -131,7 +131,7 @@ export default function Results({ result, status }: Props) {
             </ResponsiveContainer>
           </Panel>
 
-          <div style={S.twoCol}>
+          <div style={S.twoCol} className="qa-twocol">
             <Panel title="Allocation">
               <ResponsiveContainer width="100%" height={220}>
                 <PieChart>
@@ -148,7 +148,7 @@ export default function Results({ result, status }: Props) {
 
             <Panel title="Correlation Matrix">
               <div style={{ overflowX: "auto" }}>
-                <table style={S.table}>
+                <table style={S.table} className="qa-table">
                   <thead>
                     <tr>
                       <th style={S.thCorner}></th>
@@ -186,7 +186,7 @@ export default function Results({ result, status }: Props) {
 
           <Panel title="Assets Breakdown">
             <div style={{ overflowX: "auto" }}>
-              <table style={S.table}>
+              <table style={S.table} className="qa-table">
                 <thead>
                   <tr>
                     <th style={S.thLeft}>Symbol</th>

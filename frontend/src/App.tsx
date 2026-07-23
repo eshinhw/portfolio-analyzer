@@ -18,9 +18,24 @@ export default function App() {
         ::-webkit-scrollbar { width: 8px; height: 8px; }
         ::-webkit-scrollbar-thumb { background: #2A3340; border-radius: 4px; }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+        @media (max-width: 768px) {
+          .qa-body { flex-direction: column !important; }
+          .qa-sidebar {
+            width: 100% !important;
+            position: static !important;
+            border-right: none !important;
+            border-bottom: 1px solid #232B36;
+          }
+          .qa-twocol { grid-template-columns: 1fr !important; }
+        }
+        @media (max-width: 480px) {
+          .qa-table { font-size: 11px !important; }
+          .qa-table th, .qa-table td { padding: 5px 4px !important; }
+        }
       `}</style>
 
-      <div style={S.body}>
+      <div style={S.body} className="qa-body">
         <Sidebar setResult={setResult} status={status} setStatus={setStatus} />
         <Results result={result} status={status} />
       </div>

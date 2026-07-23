@@ -76,7 +76,7 @@ export default function Sidebar({ setResult, status, setStatus }: Props) {
   };
 
   return (
-    <aside style={S.sidebar}>
+    <aside style={S.sidebar} className="qa-sidebar">
       <h1 style={S.h1}>Portfolio Analyzer</h1>
       <p style={S.subtitle}>Enter symbols and weights, then run a historical performance &amp; risk analysis.</p>
       {/* Portfolio Assets */}

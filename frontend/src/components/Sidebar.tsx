@@ -1,40 +1,15 @@
 import { useEffect, useState } from "react";
 import { AlertTriangle, Loader2, Play, Plus, Trash2 } from "lucide-react";
 import { S } from "../styles/portfolioAnalyzerStyles";
-import { analyzePortfolio, PortfolioApiError } from "../../services/portfolioApi";
+import { analyzePortfolio } from "../../services/portfolioApi";
 
-// // ---------- stats helpers ----------
-// const mean = (arr: number[]): number => arr.reduce((a, b) => a + b, 0) / arr.length;
-// const stdev = (arr: number[]): number => {
-//   const m = mean(arr);
-//   return Math.sqrt(mean(arr.map((x) => (x - m) ** 2)));
-// };
-// const covariance = (a: number[], b: number[]): number => {
-//   const ma = mean(a),
-//     mb = mean(b);
-//   let s = 0;
-//   for (let i = 0; i < a.length; i++) s += (a[i] - ma) * (b[i] - mb);
-//   return s / a.length;
-// };
-// const correlation = (a: number[], b: number[]): number => {
-//   const sa = stdev(a),
-//     sb = stdev(b);
-//   if (sa === 0 || sb === 0) return 0;
-//   return covariance(a, b) / (sa * sb);
-// };
-// const dailyReturns = (closes: number[]): number[] => {
-//   const r: number[] = [];
-//   for (let i = 1; i < closes.length; i++) r.push(closes[i] / closes[i - 1] - 1);
-//   return r;
-// };
 import { type Asset, type Status, type AnalysisResult } from "../types/type";
 type Props = {
-  result: AnalysisResult | null;
   setResult: React.Dispatch<React.SetStateAction<AnalysisResult | null>>;
   status: Status;
   setStatus: React.Dispatch<React.SetStateAction<Status>>;
 };
-export default function Sidebar({ result, setResult, status, setStatus }: Props) {
+export default function Sidebar({ setResult, status, setStatus }: Props) {
   const todayStr = (): string => new Date().toISOString().slice(0, 10);
   const yearsAgoStr = (n: number): string => {
     const d = new Date();
@@ -92,8 +67,12 @@ export default function Sidebar({ result, setResult, status, setStatus }: Props)
       benchmark,
       riskFreeRate: Number(riskFree),
     });
-    setResult(result);
-    setStatus("done");
+    if (!result) {
+      setStatus("error");
+    } else {
+      setResult(result);
+      setStatus("done");
+    }
   };
 
   return (

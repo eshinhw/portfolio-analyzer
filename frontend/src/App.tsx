@@ -21,7 +21,7 @@ export default function App() {
       `}</style>
 
       <div style={S.body}>
-        <Sidebar result={result} setResult={setResult} status={status} setStatus={setStatus} />
+        <Sidebar setResult={setResult} status={status} setStatus={setStatus} />
         <Results result={result} status={status} />
       </div>
     </div>

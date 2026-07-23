@@ -126,6 +126,7 @@ export const S: Record<string, CSSProperties> = {
   main: { flex: 1, padding: "24px 28px", minWidth: 0 },
   emptyState: { textAlign: "center", color: "#8892A0", padding: "100px 40px", maxWidth: 460, margin: "0 auto" },
   emptyGlyph: { fontSize: 28, color: "#FFB020", marginBottom: 14 },
+  loadingState: { textAlign: "center", color: "#8892A0", padding: "100px 40px", maxWidth: 460, margin: "0 auto" },
   banner: {
     display: "flex",
     alignItems: "center",

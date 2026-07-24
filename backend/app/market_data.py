@@ -7,7 +7,7 @@ which source actually served the data.
 """
 
 import logging
-from typing import List
+from typing import Dict, List
 
 import pandas as pd
 import yfinance as yf
@@ -93,6 +93,49 @@ def fetch_ohlcv(
         raise ValueError(f"no data returned for {symbol}")
     df.columns = [c[0] if isinstance(c, tuple) else c for c in df.columns]
     return df[["Open", "High", "Low", "Close", "Volume"]].dropna()
+
+
+def validate_symbols(symbols: List[str]) -> Dict[str, bool]:
+    """
+    Check which of `symbols` are real, queryable tickers.
+
+    Pulls a short recent price window rather than `yf.Ticker(...).info`,
+    which does a much heavier metadata lookup per symbol — this stays cheap
+    even for a batch of symbols since it's a single grouped request.
+    """
+
+    if not symbols:
+        return {}
+
+    data = yf.download(
+        symbols,
+        period="5d",
+        interval="1d",
+        auto_adjust=True,
+        progress=False,
+        group_by="ticker",
+        threads=True,
+    )
+
+    def _has_data(sub: pd.DataFrame) -> bool:
+        return (
+            sub is not None
+            and not sub.empty
+            and "Close" in sub.columns
+            and sub["Close"].notna().any()
+        )
+
+    if data is None or data.empty:
+        return {symbol: False for symbol in symbols}
+
+    if len(symbols) == 1:
+        return {symbols[0]: _has_data(data)}
+
+    top_level = set(data.columns.get_level_values(0))
+    return {
+        symbol: symbol in top_level and _has_data(data[symbol])
+        for symbol in symbols
+    }
 
 
 # ---------------------------------------------------------------------------

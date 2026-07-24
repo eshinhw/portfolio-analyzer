@@ -1,12 +1,19 @@
 from fastapi import APIRouter, HTTPException, Query
 
 from ..compute import compute_analysis
-from ..market_data import fetch_ohlcv, get_prices_with_fallback
+from ..market_data import (
+    fetch_ohlcv,
+    get_prices_with_fallback,
+    validate_symbols,
+)
 from ..models import (
     AnalysisRequest,
     AnalysisResponse,
     PriceBar,
     PricesResponse,
+    SymbolValidationRequest,
+    SymbolValidationResponse,
+    SymbolValidationResult,
 )
 
 router = APIRouter(prefix="/api", tags=["portfolio"])
@@ -87,3 +94,25 @@ def get_prices(
         for idx, row in df.iterrows()
     ]
     return PricesResponse(symbol=symbol, bars=bars, data_source=source)
+
+
+@router.post("/validate-symbols", response_model=SymbolValidationResponse)
+def validate_symbols_endpoint(
+    req: SymbolValidationRequest,
+) -> SymbolValidationResponse:
+    """Check whether each given symbol resolves to real, queryable price data."""
+    cleaned = [s.strip().upper() for s in req.symbols if s.strip()]
+    if not cleaned:
+        raise HTTPException(400, "Provide at least one symbol.")
+
+    unique_symbols = list(dict.fromkeys(cleaned))
+    try:
+        validity = validate_symbols(unique_symbols)
+    except Exception as exc:
+        raise HTTPException(502, f"Could not validate symbols: {exc}") from exc
+
+    results = [
+        SymbolValidationResult(symbol=s, valid=validity.get(s, False))
+        for s in cleaned
+    ]
+    return SymbolValidationResponse(results=results)

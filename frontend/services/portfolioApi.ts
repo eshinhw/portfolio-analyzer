@@ -38,6 +38,36 @@ export async function analyzePortfolio(body: AnalysisRequestBody): Promise<Analy
   return res.json();
 }
 
+export interface SymbolValidationResult {
+  symbol: string;
+  valid: boolean;
+}
+
+export interface SymbolValidationResponse {
+  results: SymbolValidationResult[];
+}
+
+export async function validateSymbols(symbols: string[]): Promise<SymbolValidationResponse> {
+  const res = await fetch(`${API_BASE}/api/validate-symbols`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ symbols }),
+  });
+
+  if (!res.ok) {
+    let detail = res.statusText;
+    try {
+      const errBody = await res.json();
+      detail = errBody.detail ?? detail;
+    } catch {
+      /* response wasn't JSON, keep statusText */
+    }
+    throw new PortfolioApiError(detail, res.status);
+  }
+
+  return res.json();
+}
+
 export interface PriceBar {
   date: string;
   open: number;

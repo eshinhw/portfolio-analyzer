@@ -79,3 +79,16 @@ class PriceBar(CamelModel):
 class PricesResponse(CamelModel):
     symbol: str
     bars: List[PriceBar]
+
+
+class SymbolValidationRequest(CamelModel):
+    symbols: List[str]
+
+
+class SymbolValidationResult(CamelModel):
+    symbol: str
+    valid: bool
+
+
+class SymbolValidationResponse(CamelModel):
+    results: List[SymbolValidationResult]

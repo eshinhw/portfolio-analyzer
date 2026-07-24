@@ -53,7 +53,7 @@ export const S: Record<string, CSSProperties> = {
     width: 0,
   },
   weightInput: {
-    width: 56,
+    width: 60,
     background: "#131820",
     border: "1px solid #232B36",
     borderRadius: 6,
@@ -64,6 +64,7 @@ export const S: Record<string, CSSProperties> = {
     textAlign: "right",
   },
   pctSign: { color: "#8892A0", fontSize: 12, width: 10 },
+  invalidInput: { borderColor: "#F2545B", boxShadow: "0 0 0 1px #F2545B" },
   iconBtn: {
     background: "transparent",
     border: "none",

@@ -15,7 +15,7 @@ import {
   Cell,
   PieChart,
 } from "recharts";
-import { ArrowUpRight, ArrowDownRight, Loader2, X } from "lucide-react";
+import { ArrowUpRight, ArrowDownRight, Loader2, AlertTriangle } from "lucide-react";
 import Metric from "./subcomponents/Metric";
 import Panel from "./subcomponents/Panel";
 import { type Status, type AnalysisResult, type PieDataPoint } from "../types/type";
@@ -24,9 +24,10 @@ import { useMemo } from "react";
 type Props = {
   result: AnalysisResult | null;
   status: Status;
+  errorMsg: string;
 };
 
-export default function Results({ result, status }: Props) {
+export default function Results({ result, status, errorMsg }: Props) {
   const fmtPct = (x: number, d = 2): string => `${(x * 100).toFixed(d)}%`;
   const fmtNum = (x: number, d = 2): string => x.toFixed(d);
 
@@ -57,8 +58,7 @@ export default function Results({ result, status }: Props) {
       )}
       {status === "error" && (
         <div style={S.loadingState}>
-          <X size={15} style={{ color: "#FFB020" }} />
-          <p>Something went wrong...</p>
+          <AlertTriangle size={15} style={{ color: "#FFB020" }} /> <p>{errorMsg}</p>
         </div>
       )}
 
@@ -68,10 +68,10 @@ export default function Results({ result, status }: Props) {
           <div style={S.metricGrid}>
             <Metric label="Total Return" value={fmtPct(result.totalReturn)} positive={result.totalReturn >= 0} />
             <Metric label="CAGR" value={fmtPct(result.cagr)} positive={result.cagr >= 0} />
-            <Metric label="Sharpe Ratio" value={fmtNum(result.sharpe)} positive={result.sharpe >= 0} />
-            <Metric label="Alpha (Annualized)" value={fmtPct(result.alpha)} positive={result.alpha >= 0} />
+            <Metric label="Sharpe" value={fmtNum(result.sharpe)} positive={result.sharpe >= 0} />
+            <Metric label="Annualized Alpha" value={fmtPct(result.alpha)} positive={result.alpha >= 0} />
             <Metric label="Max Drawdown" value={fmtPct(result.maxDrawdown)} positive={false} />
-            <Metric label="Ann. Volatility" value={fmtPct(result.annualVol)} neutral />
+            <Metric label="Annualized Vol" value={fmtPct(result.annualVol)} neutral />
 
             <Metric label={`Beta vs ${result.benchmark}`} value={fmtNum(result.beta)} neutral />
             <Metric label="Observations" value={`${result.nObs} days`} neutral />
@@ -97,7 +97,7 @@ export default function Results({ result, status }: Props) {
                 <Line
                   type="monotone"
                   dataKey="benchmark"
-                  name={result.benchmark}
+                  name={`Benchmark (${result.benchmark})`}
                   stroke="#4FD1C5"
                   dot={false}
                   strokeWidth={1.5}

@@ -1,15 +1,16 @@
 import { useEffect, useState } from "react";
-import { AlertTriangle, Loader2, Play, Plus, Trash2 } from "lucide-react";
+import { Loader2, Play, Plus, Trash2 } from "lucide-react";
 import { S } from "../styles/portfolioAnalyzerStyles";
-import { analyzePortfolio } from "../../services/portfolioApi";
+import { analyzePortfolio, PortfolioApiError, validateSymbols } from "../../services/portfolioApi";
 
 import { type Asset, type Status, type AnalysisResult } from "../types/type";
 type Props = {
   setResult: React.Dispatch<React.SetStateAction<AnalysisResult | null>>;
   status: Status;
   setStatus: React.Dispatch<React.SetStateAction<Status>>;
+  setErrorMsg: React.Dispatch<React.SetStateAction<string>>;
 };
-export default function Sidebar({ setResult, status, setStatus }: Props) {
+export default function Sidebar({ setResult, status, setStatus, setErrorMsg }: Props) {
   const todayStr = (): string => new Date().toISOString().slice(0, 10);
   const yearsAgoStr = (n: number): string => {
     const d = new Date();
@@ -17,7 +18,9 @@ export default function Sidebar({ setResult, status, setStatus }: Props) {
     return d.toISOString().slice(0, 10);
   };
   const minDate = yearsAgoStr(10);
-  const [errorMsg, setErrorMsg] = useState<string>("");
+
+  const [invalidSymbols, setInvalidSymbols] = useState<Set<string>>(new Set());
+  const [phase, setPhase] = useState<"idle" | "validating" | "analyzing">("idle");
   const [assets, setAssets] = useState<Asset[]>([
     { id: 1, symbol: "AAPL", weight: 30 },
     { id: 2, symbol: "MSFT", weight: 30 },
@@ -25,10 +28,15 @@ export default function Sidebar({ setResult, status, setStatus }: Props) {
   ]);
   const [nextId, setNextId] = useState<number>(4);
   const weightSum = assets.reduce((s, r) => s + (parseFloat(String(r.weight)) || 0), 0);
-  const addRow = () => setAssets((r) => [...r, { id: nextId, symbol: "", weight: 0 }]);
+  const addRow = () => {
+    setAssets((r) => [...r, { id: nextId, symbol: "", weight: 0 }]);
+    setNextId((nextId) => nextId + 1);
+  };
   const removeRow = (id: number) => setAssets((r) => r.filter((x) => x.id !== id));
-  const updateRow = (id: number, field: keyof Asset, value: string) =>
+  const updateRow = (id: number, field: keyof Asset, value: string) => {
     setAssets((r) => r.map((x) => (x.id === id ? { ...x, [field]: value } : x)));
+    if (field === "symbol") setInvalidSymbols(new Set());
+  };
   const [startDate, setStartDate] = useState<string>(yearsAgoStr(3));
   const [endDate, setEndDate] = useState<string>(todayStr());
   const [benchmark, setBenchmark] = useState<string>("SPY");
@@ -39,7 +47,7 @@ export default function Sidebar({ setResult, status, setStatus }: Props) {
     setAssets((r) =>
       r.map((x) => ({
         ...x,
-        weight: +(((parseFloat(String(x.weight)) || 0) * 100) / weightSum).toFixed(2),
+        weight: +(((parseFloat(String(x.weight)) || 0) * 100) / weightSum).toFixed(1),
       })),
     );
   };
@@ -50,6 +58,7 @@ export default function Sidebar({ setResult, status, setStatus }: Props) {
 
   const runAnalysis = async () => {
     setStatus("loading");
+    setInvalidSymbols(new Set());
     const cleanAssets = assets
       .map((r) => ({ ...r, symbol: r.symbol.trim().toUpperCase(), weight: parseFloat(String(r.weight)) || 0 }))
       .filter((r) => r.symbol && r.weight > 0);
@@ -60,18 +69,59 @@ export default function Sidebar({ setResult, status, setStatus }: Props) {
       return;
     }
 
-    const result = await analyzePortfolio({
-      holdings: cleanAssets.map((r) => ({ symbol: r.symbol, weight: r.weight })),
-      startDate,
-      endDate,
-      benchmark,
-      riskFreeRate: Number(riskFree),
-    });
-    if (!result) {
+    if (weightSum > 100) {
       setStatus("error");
-    } else {
+      setErrorMsg(
+        `Total portfolio weight is ${weightSum}% that is greater than 100%. Please adjust or normalize the weights.`,
+      );
+      return;
+    }
+
+    if (weightSum != 100) {
+      setStatus("error");
+      setErrorMsg(
+        `Total portfolio weight is ${weightSum}% that is not equal to 100%. Please adjust the weights and rerun the analysis.`,
+      );
+      return;
+    }
+
+    const cleanBenchmark = benchmark.trim().toUpperCase();
+    const symbolsToCheck = Array.from(new Set([...cleanAssets.map((r) => r.symbol), cleanBenchmark]));
+
+    setPhase("validating");
+    try {
+      const { results } = await validateSymbols(symbolsToCheck);
+      const invalid = results.filter((r) => !r.valid).map((r) => r.symbol);
+      if (invalid.length > 0) {
+        setInvalidSymbols(new Set(invalid));
+        setStatus("error");
+        setErrorMsg(`Unrecognized symbol${invalid.length > 1 ? "s" : ""}: ${invalid.join(", ")}`);
+        return;
+      }
+    } catch (err) {
+      setStatus("error");
+      setErrorMsg(err instanceof PortfolioApiError ? err.message : "Could not validate symbols.");
+      return;
+    } finally {
+      setPhase("idle");
+    }
+
+    setPhase("analyzing");
+    try {
+      const result = await analyzePortfolio({
+        holdings: cleanAssets.map((r) => ({ symbol: r.symbol, weight: r.weight })),
+        startDate,
+        endDate,
+        benchmark: cleanBenchmark,
+        riskFreeRate: Number(riskFree),
+      });
       setResult(result);
       setStatus("done");
+    } catch (err) {
+      setStatus("error");
+      setErrorMsg(err instanceof PortfolioApiError ? err.message : "Something went wrong running the analysis.");
+    } finally {
+      setPhase("idle");
     }
   };
 
@@ -86,7 +136,10 @@ export default function Sidebar({ setResult, status, setStatus }: Props) {
           <div className="qa-row" key={r.id} style={S.holdingRow}>
             <input
               className="qa-input"
-              style={S.symbolInput}
+              style={{
+                ...S.symbolInput,
+                ...(invalidSymbols.has(r.symbol.trim().toUpperCase()) ? S.invalidInput : {}),
+              }}
               value={r.symbol}
               placeholder="TICKER"
               onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
@@ -147,9 +200,15 @@ export default function Sidebar({ setResult, status, setStatus }: Props) {
         <label style={S.fieldLabel}>Benchmark</label>
         <input
           className="qa-input"
-          style={S.fullInput}
+          style={{
+            ...S.fullInput,
+            ...(invalidSymbols.has(benchmark.trim().toUpperCase()) ? S.invalidInput : {}),
+          }}
           value={benchmark}
-          onChange={(e) => setBenchmark(e.target.value.toUpperCase())}
+          onChange={(e) => {
+            setBenchmark(e.target.value.toUpperCase());
+            setInvalidSymbols(new Set());
+          }}
         />
         <label style={S.fieldLabel}>Risk-free rate (annual %)</label>
         <input
@@ -168,13 +227,8 @@ export default function Sidebar({ setResult, status, setStatus }: Props) {
         ) : (
           <Play size={15} />
         )}
-        {status === "loading" ? "Running analysis…" : "Run analysis"}
+        {status === "loading" ? (phase === "validating" ? "Checking symbols…" : "Running analysis…") : "Run analysis"}
       </button>
-      {status === "error" && (
-        <div style={S.errorBox}>
-          <AlertTriangle size={14} /> {errorMsg}
-        </div>
-      )}
     </aside>
   );
 }

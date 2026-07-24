@@ -7,6 +7,7 @@ import { type AnalysisResult, type Status } from "./types/type";
 export default function App() {
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [status, setStatus] = useState<Status>("idle");
+  const [errorMsg, setErrorMsg] = useState<string>("");
   return (
     <div style={S.app}>
       <style>{`
@@ -36,8 +37,8 @@ export default function App() {
       `}</style>
 
       <div style={S.body} className="qa-body">
-        <Sidebar setResult={setResult} status={status} setStatus={setStatus} />
-        <Results result={result} status={status} />
+        <Sidebar setResult={setResult} status={status} setStatus={setStatus} setErrorMsg={setErrorMsg} />
+        <Results result={result} status={status} errorMsg={errorMsg} />
       </div>
     </div>
   );

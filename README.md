@@ -2,6 +2,8 @@
 
 Quantitative Risk and Return Analysis for Stock & ETF Portfolios
 
+<img width="1426" alt="Portfolio Analyzer Demo Page" src="https://github.com/user-attachments/assets/57dfa0d7-d12f-4695-b4c5-3d64200ddbbf">
+
 ## Project Domain Knowledge
 
 ### Total Return

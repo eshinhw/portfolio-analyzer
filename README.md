@@ -47,24 +47,7 @@ the same portfolio performance/risk analysis your React app previously did
 in the browser — server-side now, so it's not subject to browser CORS and
 you get real live data reliably.
 
-### Structure
-
-```
-backend/
-  app/
-    main.py              FastAPI app, CORS config
-    models.py             Pydantic request/response models (camelCase JSON)
-    market_data.py        yfinance fetch + in-memory cache + synthetic fallback
-    analysis.py            Pure math: returns, CAGR, vol, Sharpe, beta, alpha,
-                            drawdown, correlation matrix (no I/O, unit-testable)
-    routers/
-      portfolio.py         /api/analyze and /api/prices endpoints
-  requirements.txt
-  frontend_client/
-    portfolioApi.ts        Drop-in TS client for your Vite app
-```
-
-### Run it
+### Run it (local dev)
 
 ```bash
 cd backend
@@ -178,23 +161,3 @@ port). Add your deployed frontend's origin to `allow_origins` in
   the same `get_prices_with_fallback` function signature — that's the one
   seam designed to be swapped out without touching `analysis.py` or the
   router at all.
-
-## Deployment
-
-- Use environment variables and configure different API URLs for development vs production.
-```
-Development:
-React (localhost:5173)
-        |
-        | API_URL=http://localhost:8000
-        |
-FastAPI (localhost:8000)
-
-
-Production:
-React (yourdomain.com)
-        |
-        | API_URL=https://api.yourdomain.com
-        |
-FastAPI (api.yourdomain.com)
-```
